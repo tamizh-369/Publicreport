@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citizen Dashboard - Chennai Clean</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo-section">
+                        <i class="fas fa-user-circle logo-icon"></i>
+                        <div class="user-info">
+                            <h1 class="logo-text" id="welcomeText">Welcome, Citizen</h1>
+                            <p class="subtitle" id="userZone">Zone: Auto-detected</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-secondary" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <div class="glass-card action-card primary-action" onclick="createReport()">
+                <div class="action-content">
+                    <div class="action-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <div class="action-text">
+                        <h3>Report Illegal Dumping</h3>
+                        <p>Take a photo and report waste dumping</p>
+                    </div>
+                    <div class="action-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Cards -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="glass-card stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalReportsCount">0</div>
+                        <div class="stat-label">Total Reports</div>
+                    </div>
+                </div>
+
+                <div class="glass-card stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="pendingReportsCount">0</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                </div>
+
+                <div class="glass-card stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="completedReportsCount">0</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                </div>
+
+                <div class="glass-card stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-month"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="monthlyReportsCount">0</div>
+                        <div class="stat-label">This Month</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reports List -->
+        <section class="reports-section">
+            <div class="section-header">
+                <h2><i class="fas fa-history"></i> Your Reports</h2>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="pending">Pending</button>
+                    <button class="filter-btn" data-filter="assigned">Assigned</button>
+                    <button class="filter-btn" data-filter="completed">Completed</button>
+                    <button class="filter-btn" data-filter="verified">Verified</button>
+                </div>
+            </div>
+
+            <div class="reports-container">
+                <div class="glass-card empty-state" id="emptyState">
+                    <div class="empty-content">
+                        <i class="fas fa-clipboard-list empty-icon"></i>
+                        <h3>No Reports Yet</h3>
+                        <p>Start by reporting illegal dumping in your area</p>
+                        <button class="btn btn-primary" onclick="createReport()">
+                            <i class="fas fa-plus"></i>
+                            Create First Report
+                        </button>
+                    </div>
+                </div>
+
+                <div id="reportsList" class="reports-list">
+                    <!-- Reports will be loaded here dynamically -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="createReport()" title="Create New Report">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Floating Background Elements -->
+    <div class="floating-elements">
+        <div class="floating-element" style="--delay: 0s; --duration: 8s;"></div>
+        <div class="floating-element" style="--delay: 3s; --duration: 12s;"></div>
+        <div class="floating-element" style="--delay: 6s; --duration: 10s;"></div>
+    </div>
+
+    <!-- Load Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/supabase.js"></script>
+    <script src="../assets/app.js"></script>
+
+    <script>
+        // Use the existing currentUser from app.js or declare it if it doesn't exist
+        let citizenCurrentUser = window.currentUser || null;
+        let allReports = [];
+        let currentFilter = 'all';
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Supabase
+            await waitForSupabase();
+
+            // Check authentication
+            const storedUser = localStorage.getItem('currentUser');
+            if (!storedUser) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            citizenCurrentUser = JSON.parse(storedUser);
+            if (citizenCurrentUser.user_type !== 'citizen') {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            // Initialize dashboard
+            initializeDashboard();
+            loadUserReports();
+            setupRealtimeUpdates();
+
+            // Setup filter buttons
+            setupFilterButtons();
+        });
+
+        async function initializeDashboard() {
+            // Update welcome text
+            document.getElementById('welcomeText').textContent = `Welcome, ${citizenCurrentUser.name}`;
+
+            // Update zone info
+            if (citizenCurrentUser.zone_id) {
+                const zoneName = await getZoneName(citizenCurrentUser.zone_id);
+                document.getElementById('userZone').textContent = `Zone: ${zoneName}`;
+            }
+        }
+
+        async function getZoneName(zoneId) {
+            try {
+                const { data: zone } = await window.supabase
+                    .from('zones')
+                    .select('name')
+                    .eq('id', zoneId)
+                    .single();
+
+                return zone ? zone.name : 'Unknown';
+            } catch (error) {
+                return 'Unknown';
+            }
+        }
+
+        async function loadUserReports() {
+            try {
+                showLoading('Loading your reports...');
+
+                // First, get the reports data
+                const { data: reports, error: reportsError } = await window.supabase
+                    .from('reports')
+                    .select('*')
+                    .eq('citizen_id', citizenCurrentUser.id)
+                    .order('created_at', { ascending: false });
+
+                if (reportsError) {
+                    throw reportsError;
+                }
+
+                // Then get worker and zone data separately
+                const reportsWithDetails = [];
+                for (const report of reports || []) {
+                    const reportData = { ...report };
+
+                    // Get worker data if assigned
+                    if (report.worker_id) {
+                        const { data: worker } = await window.supabase
+                            .from('workers')
+                            .select('name')
+                            .eq('id', report.worker_id)
+                            .single();
+                        reportData.worker = worker;
+                    }
+
+                    // Get zone data
+                    if (report.zone_id) {
+                        const { data: zone } = await window.supabase
+                            .from('zones')
+                            .select('name')
+                            .eq('id', report.zone_id)
+                            .single();
+                        reportData.zone = zone;
+                    }
+
+                    reportsWithDetails.push(reportData);
+                }
+
+                allReports = reportsWithDetails;
+                updateStatsCards();
+                displayReports(allReports);
+
+                hideLoading();
+
+            } catch (error) {
+                hideLoading();
+                console.error('Error loading reports:', error);
+                showNotification('Failed to load reports', 'error');
+            }
+        }
+
+        function updateStatsCards() {
+            const total = allReports.length;
+            const pending = allReports.filter(r => r.status === 'pending').length;
+            const completed = allReports.filter(r => r.status === 'verified').length;
+
+            // This month's reports
+            const thisMonth = new Date();
+            thisMonth.setDate(1);
+            const monthlyReports = allReports.filter(r =>
+                new Date(r.created_at) >= thisMonth
+            ).length;
+
+            document.getElementById('totalReportsCount').textContent = total;
+            document.getElementById('pendingReportsCount').textContent = pending;
+            document.getElementById('completedReportsCount').textContent = completed;
+            document.getElementById('monthlyReportsCount').textContent = monthlyReports;
+
+            // Animate numbers
+            animateNumbers();
+        }
+
+        function displayReports(reports) {
+            const reportsList = document.getElementById('reportsList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (reports.length === 0) {
+                emptyState.style.display = 'block';
+                reportsList.innerHTML = '';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+
+            reportsList.innerHTML = reports.map(report => `
+                <div class="glass-card report-card" data-status="${report.status}">
+                    <div class="report-header">
+                        <div class="report-status">
+                            <span class="status-badge status-${report.status}">
+                                <i class="fas fa-${getStatusIcon(report.status)}"></i>
+                                ${getStatusText(report.status)}
+                            </span>
+                        </div>
+                        <div class="report-date">
+                            ${formatDateTime(report.created_at)}
+                        </div>
+                    </div>
+
+                    <div class="report-content">
+                        <div class="report-image">
+                            <img src="${report.photo_url}" alt="Dumping site" loading="lazy">
+                            <div class="image-overlay">
+                                <i class="fas fa-search-plus" onclick="viewImage('${report.photo_url}')"></i>
+                            </div>
+                        </div>
+
+                        <div class="report-details">
+                            <div class="report-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${report.zone?.name || 'Zone ' + report.zone_id}</span>
+                            </div>
+
+                            ${report.description ? `
+                                <div class="report-description">
+                                    <i class="fas fa-comment"></i>
+                                    <span>${report.description}</span>
+                                </div>
+                            ` : ''}
+
+                            ${report.worker ? `
+                                <div class="report-worker">
+                                    <i class="fas fa-user-hard-hat"></i>
+                                    <span>Assigned to: ${report.worker.name}</span>
+                                </div>
+                            ` : ''}
+
+                            ${report.worker_photo_url ? `
+                                <div class="completion-photo">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Cleanup completed</span>
+                                    <img src="${report.worker_photo_url}" alt="Completed cleanup"
+                                         onclick="viewImage('${report.worker_photo_url}')">
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="report-footer">
+                        <div class="report-timeline">
+                            <div class="timeline-step ${report.created_at ? 'completed' : ''}">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Reported</span>
+                            </div>
+                            <div class="timeline-step ${report.assigned_at ? 'completed' : ''}">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Assigned</span>
+                            </div>
+                            <div class="timeline-step ${report.completed_at ? 'completed' : ''}">
+                                <i class="fas fa-broom"></i>
+                                <span>Cleaned</span>
+                            </div>
+                            <div class="timeline-step ${report.verified_at ? 'completed' : ''}">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Verified</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupFilterButtons() {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active button
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Filter reports
+                    currentFilter = this.dataset.filter;
+                    filterReports();
+                });
+            });
+        }
+
+        function filterReports() {
+            let filteredReports = allReports;
+
+            if (currentFilter !== 'all') {
+                filteredReports = allReports.filter(report =>
+                    report.status === currentFilter
+                );
+            }
+
+            displayReports(filteredReports);
+        }
+
+        function getStatusIcon(status) {
+            switch (status) {
+                case 'pending': return 'clock';
+                case 'assigned': return 'user-plus';
+                case 'completed': return 'broom';
+                case 'verified': return 'check-circle';
+                default: return 'question-circle';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'pending': return 'Pending Assignment';
+                case 'assigned': return 'Worker Assigned';
+                case 'completed': return 'Cleanup Completed';
+                case 'verified': return 'Verified Complete';
+                default: return 'Unknown';
+            }
+        }
+
+        function setupRealtimeUpdates() {
+            window.supabase
+                .channel('citizen-reports')
+                .on('postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'reports',
+                        filter: `citizen_id=eq.${citizenCurrentUser.id}`
+                    },
+                    (payload) => {
+                        showNotification(`Report status updated: ${getStatusText(payload.new.status)}`, 'info');
+                        loadUserReports();
+                    }
+                )
+                .subscribe();
+        }
+
+        function createReport() {
+            window.location.href = 'report.html';
+        }
+
+        function viewImage(imageUrl) {
+            // Create modal for viewing images
+            const modal = document.createElement('div');
+            modal.className = 'image-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="modal-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </span>
+                    <img src="${imageUrl}" alt="Full size image">
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('currentUser');
+                window.location.href = '../index.html';
+            }
+        }
+
+        function animateNumbers() {
+            const numbers = document.querySelectorAll('.stat-number');
+            numbers.forEach(num => {
+                const target = parseInt(num.textContent);
+                let current = 0;
+                const increment = Math.max(1, target / 20);
+
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        num.textContent = target;
+                        clearInterval(timer);
+                    } else {
+                        num.textContent = Math.floor(current);
+                    }
+                }, 50);
+            });
+        }
+
+        // Update report list function for real-time updates
+        function updateReportsList() {
+            loadUserReports();
+        }
+    </script>
+
+    <style>
+        /* Dashboard-specific styles */
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            margin: 2rem 0;
+        }
+
+        .action-card {
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .action-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .action-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .action-text {
+            flex: 1;
+        }
+
+        .action-text h3 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1.3rem;
+        }
+
+        .action-text p {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
+        .action-arrow {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .action-card:hover .action-arrow {
+            transform: translateX(10px);
+            color: var(--primary-color);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--primary-color);
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Reports Section */
+        .reports-section {
+            margin-top: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Report Cards */
+        .reports-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .report-card {
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .report-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-pending { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+        .status-assigned { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .status-completed { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .status-verified { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+
+        .report-date {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .report-content {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .report-image {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 120px;
+        }
+
+        .report-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+        }
+
+        .image-overlay i {
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .report-image:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .report-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .report-details > div {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .report-details i {
+            width: 16px;
+            color: var(--primary-color);
+        }
+
+        .completion-photo {
+            align-items: flex-start !important;
+        }
+
+        .completion-photo img {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+
+        /* Timeline */
+        .report-timeline {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .timeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-step.completed {
+            color: var(--primary-color);
+        }
+
+        .timeline-step i {
+            font-size: 1rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .empty-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .empty-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Image Modal */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        @keyframes modalFadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filter-buttons {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .report-content {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .report-image {
+                height: 200px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .timeline-step {
+                font-size: 0.65rem;
+            }
+
+            .fab {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</body>
+</html>

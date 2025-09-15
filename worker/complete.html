@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Task - Chennai Clean</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="header-content">
+                <button class="btn-back" onclick="window.history.back()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="logo-section">
+                    <i class="fas fa-check-circle logo-icon"></i>
+                    <h1 class="logo-text">Complete Cleanup Task</h1>
+                </div>
+                <p class="subtitle">Document your cleanup work</p>
+            </div>
+        </header>
+
+        <!-- Task Details -->
+        <section class="task-info-section">
+            <div class="glass-card task-info-card" id="taskInfoCard">
+                <!-- Task details will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Completion Form -->
+        <main class="main-content">
+            <div class="glass-card completion-card">
+                <form id="completionForm" class="completion-form">
+                    <div class="form-header">
+                        <i class="fas fa-camera form-icon"></i>
+                        <h2>Take Completion Photo</h2>
+                        <p>Show that the area has been cleaned up</p>
+                    </div>
+
+                    <!-- Photo Capture Section -->
+                    <div class="form-group photo-section">
+                        <label class="form-label">
+                            <i class="fas fa-camera"></i> After Cleanup Photo
+                        </label>
+
+                        <div class="photo-capture">
+                            <div class="photo-placeholder" id="photoPlaceholder">
+                                <div class="placeholder-content">
+                                    <i class="fas fa-camera-retro"></i>
+                                    <h3>Take After Photo</h3>
+                                    <p>Show the cleaned area to verify completion</p>
+                                    <button type="button" class="btn btn-primary" id="captureBtn">
+                                        <i class="fas fa-camera"></i>
+                                        Open Camera
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="photo-preview" id="photoPreview" style="display: none;">
+                                <img id="capturedImage" alt="Completion photo">
+                                <div class="photo-actions">
+                                    <button type="button" class="btn btn-secondary" id="retakeBtn">
+                                        <i class="fas fa-redo"></i>
+                                        Retake
+                                    </button>
+                                    <button type="button" class="btn btn-success" id="confirmBtn">
+                                        <i class="fas fa-check"></i>
+                                        Use Photo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display: none;">
+                        <div class="form-hint">Take a clear photo showing the cleaned area</div>
+                    </div>
+
+                    <!-- Additional Notes -->
+                    <div class="form-group">
+                        <label for="notes" class="form-label">
+                            <i class="fas fa-sticky-note"></i> Additional Notes (Optional)
+                        </label>
+                        <textarea
+                            id="notes"
+                            class="form-textarea"
+                            placeholder="Any additional information about the cleanup (e.g., challenges faced, materials removed)..."
+                            rows="4"
+                            maxlength="300"
+                        ></textarea>
+                        <div class="form-hint">
+                            <span id="charCount">0</span>/300 characters
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success btn-large" id="submitBtn" disabled>
+                            <i class="fas fa-check-circle"></i>
+                            Mark Task Complete
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Success Message -->
+                <div id="successMessage" class="success-message" style="display: none;">
+                    <div class="success-content">
+                        <i class="fas fa-check-circle success-icon"></i>
+                        <h3>Task Completed Successfully!</h3>
+                        <p>Your completion has been submitted and is awaiting admin verification.</p>
+                        <div class="success-actions">
+                            <button class="btn btn-primary" onclick="goToDashboard()">
+                                <i class="fas fa-tachometer-alt"></i>
+                                Back to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completion Guidelines -->
+            <div class="guidelines-section">
+                <div class="glass-card guidelines-card">
+                    <h3><i class="fas fa-clipboard-check"></i> Completion Guidelines</h3>
+                    <div class="guidelines-grid">
+                        <div class="guideline-item">
+                            <i class="fas fa-broom guideline-icon"></i>
+                            <div>
+                                <strong>Complete Cleanup</strong>
+                                <p>Remove all waste materials from the site</p>
+                            </div>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="fas fa-camera guideline-icon"></i>
+                            <div>
+                                <strong>Clear Documentation</strong>
+                                <p>Take well-lit photos showing the cleaned area</p>
+                            </div>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="fas fa-recycle guideline-icon"></i>
+                            <div>
+                                <strong>Proper Disposal</strong>
+                                <p>Dispose of waste in designated collection points</p>
+                            </div>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="fas fa-shield-alt guideline-icon"></i>
+                            <div>
+                                <strong>Safety First</strong>
+                                <p>Use protective equipment and follow safety protocols</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Floating Background Elements -->
+    <div class="floating-elements">
+        <div class="floating-element" style="--delay: 0s; --duration: 8s;"></div>
+        <div class="floating-element" style="--delay: 3s; --duration: 12s;"></div>
+        <div class="floating-element" style="--delay: 6s; --duration: 10s;"></div>
+    </div>
+
+    <!-- Load Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/supabase.js"></script>
+    <script src="../assets/app.js"></script>
+
+    <script>
+        let currentUser = null;
+        let currentTask = null;
+        let capturedPhoto = null;
+        let taskId = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Supabase
+            await waitForSupabase();
+
+            // Check authentication
+            const storedUser = localStorage.getItem('currentUser');
+            if (!storedUser) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            currentUser = JSON.parse(storedUser);
+            if (currentUser.user_type !== 'worker') {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            // Get task ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            taskId = urlParams.get('taskId');
+
+            if (!taskId) {
+                showNotification('Task ID not provided', 'error');
+                setTimeout(() => window.history.back(), 2000);
+                return;
+            }
+
+            // Load task details
+            await loadTaskDetails();
+
+            // Initialize form
+            initializeForm();
+            initializeCamera();
+        });
+
+        async function loadTaskDetails() {
+            try {
+                showLoading('Loading task details...');
+
+                const { data: task, error } = await window.supabase
+                    .from('reports')
+                    .select(`
+                        *,
+                        citizen:citizen_id(name, phone),
+                        zone:zones(name)
+                    `)
+                    .eq('id', taskId)
+                    .eq('worker_id', currentUser.id)
+                    .single();
+
+                if (error || !task) {
+                    throw new Error('Task not found or not assigned to you');
+                }
+
+                if (task.status !== 'assigned') {
+                    throw new Error('Task is not in assigned status');
+                }
+
+                currentTask = task;
+                displayTaskInfo(task);
+
+                hideLoading();
+
+            } catch (error) {
+                hideLoading();
+                console.error('Error loading task:', error);
+                showNotification(error.message, 'error');
+                setTimeout(() => window.history.back(), 3000);
+            }
+        }
+
+        function displayTaskInfo(task) {
+            const taskInfoCard = document.getElementById('taskInfoCard');
+
+            taskInfoCard.innerHTML = `
+                <div class="task-info-header">
+                    <h3><i class="fas fa-tasks"></i> Task Details</h3>
+                    <span class="status-badge status-assigned">
+                        <i class="fas fa-clock"></i>
+                        Assigned to You
+                    </span>
+                </div>
+
+                <div class="task-info-content">
+                    <div class="task-info-image">
+                        <img src="${task.photo_url}" alt="Dumping site">
+                        <div class="image-overlay" onclick="viewImage('${task.photo_url}')">
+                            <i class="fas fa-search-plus"></i>
+                        </div>
+                    </div>
+
+                    <div class="task-info-details">
+                        <div class="detail-row">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <strong>Location:</strong>
+                            <span>${task.zone?.name || 'Zone ' + task.zone_id}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <i class="fas fa-crosshairs"></i>
+                            <strong>Coordinates:</strong>
+                            <span>${task.latitude.toFixed(6)}, ${task.longitude.toFixed(6)}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <i class="fas fa-user"></i>
+                            <strong>Reported by:</strong>
+                            <span>${task.citizen?.name || 'Citizen'}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <i class="fas fa-calendar"></i>
+                            <strong>Assigned:</strong>
+                            <span>${formatDateTime(task.assigned_at)}</span>
+                        </div>
+
+                        ${task.description ? `
+                            <div class="detail-row">
+                                <i class="fas fa-comment"></i>
+                                <strong>Description:</strong>
+                                <span>${task.description}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="task-info-actions">
+                    <button class="btn btn-secondary" onclick="navigateToLocation(${task.latitude}, ${task.longitude})">
+                        <i class="fas fa-directions"></i>
+                        Get Directions
+                    </button>
+                </div>
+            `;
+        }
+
+        function initializeCamera() {
+            const captureBtn = document.getElementById('captureBtn');
+            const photoInput = document.getElementById('photoInput');
+            const retakeBtn = document.getElementById('retakeBtn');
+            const confirmBtn = document.getElementById('confirmBtn');
+
+            captureBtn.addEventListener('click', function() {
+                photoInput.click();
+            });
+
+            photoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        showPhotoPreview(e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            retakeBtn.addEventListener('click', function() {
+                hidePhotoPreview();
+                photoInput.value = '';
+                capturedPhoto = null;
+                updateSubmitButton();
+            });
+
+            confirmBtn.addEventListener('click', function() {
+                capturedPhoto = photoInput.files[0];
+                document.getElementById('photoPlaceholder').style.display = 'none';
+                showNotification('Completion photo confirmed!', 'success');
+                updateSubmitButton();
+            });
+        }
+
+        function showPhotoPreview(imageSrc) {
+            const placeholder = document.getElementById('photoPlaceholder');
+            const preview = document.getElementById('photoPreview');
+            const capturedImage = document.getElementById('capturedImage');
+
+            capturedImage.src = imageSrc;
+            placeholder.style.display = 'none';
+            preview.style.display = 'block';
+        }
+
+        function hidePhotoPreview() {
+            const placeholder = document.getElementById('photoPlaceholder');
+            const preview = document.getElementById('photoPreview');
+
+            preview.style.display = 'none';
+            placeholder.style.display = 'block';
+        }
+
+        function initializeForm() {
+            const form = document.getElementById('completionForm');
+            const notes = document.getElementById('notes');
+            const charCount = document.getElementById('charCount');
+
+            // Character counter
+            notes.addEventListener('input', function() {
+                const count = this.value.length;
+                charCount.textContent = count;
+
+                if (count > 250) {
+                    charCount.style.color = 'var(--warning-color)';
+                } else {
+                    charCount.style.color = 'var(--text-muted)';
+                }
+            });
+
+            // Form submission
+            form.addEventListener('submit', handleFormSubmit);
+        }
+
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const hasPhoto = capturedPhoto !== null;
+
+            if (hasPhoto) {
+                submitBtn.disabled = false;
+                submitBtn.className = 'btn btn-success btn-large';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.className = 'btn btn-success btn-large disabled';
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            if (!capturedPhoto) {
+                showNotification('Please take a completion photo first', 'error');
+                return;
+            }
+
+            try {
+                showLoading('Submitting task completion...');
+
+                // Upload completion photo
+                const photoUrl = await uploadImage(capturedPhoto);
+
+                // Update task status
+                const { error } = await window.supabase
+                    .from('reports')
+                    .update({
+                        status: 'completed',
+                        worker_photo_url: photoUrl,
+                        completed_at: new Date().toISOString(),
+                        worker_notes: document.getElementById('notes').value.trim() || null
+                    })
+                    .eq('id', taskId)
+                    .eq('worker_id', currentUser.id);
+
+                if (error) {
+                    throw error;
+                }
+
+                hideLoading();
+
+                // Show success message
+                document.getElementById('completionForm').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'block';
+
+                showNotification('Task completed successfully! Awaiting admin verification.', 'success');
+
+            } catch (error) {
+                hideLoading();
+                console.error('Submit error:', error);
+                showNotification(error.message || 'Failed to complete task. Please try again.', 'error');
+            }
+        }
+
+        function navigateToLocation(lat, lng) {
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            window.open(url, '_blank');
+        }
+
+        function viewImage(imageUrl) {
+            const modal = document.createElement('div');
+            modal.className = 'image-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="modal-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </span>
+                    <img src="${imageUrl}" alt="Full size image">
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        function goToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+
+    <style>
+        /* Task completion specific styles */
+        .btn-back {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-back:hover {
+            transform: translateX(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Task Info Section */
+        .task-info-section {
+            margin-bottom: 2rem;
+        }
+
+        .task-info-card {
+            padding: 1.5rem;
+        }
+
+        .task-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .task-info-header h3 {
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-assigned {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .task-info-content {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .task-info-image {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 200px;
+        }
+
+        .task-info-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+        }
+
+        .image-overlay i {
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .task-info-image:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .task-info-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .detail-row i {
+            width: 20px;
+            color: var(--primary-color);
+            margin-top: 0.1rem;
+        }
+
+        .detail-row strong {
+            min-width: 100px;
+            color: var(--text-primary);
+        }
+
+        .detail-row span {
+            color: var(--text-secondary);
+            flex: 1;
+        }
+
+        .task-info-actions {
+            padding: 1rem 0;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* Completion Form */
+        .completion-card {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-icon {
+            font-size: 3rem;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        .form-header h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .form-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Photo Section */
+        .photo-section {
+            margin-bottom: 2rem;
+        }
+
+        .photo-capture {
+            border: 2px dashed var(--glass-border);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .photo-capture:hover {
+            border-color: var(--success-color);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .photo-placeholder {
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .placeholder-content i {
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .placeholder-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .placeholder-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .photo-preview {
+            position: relative;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .photo-actions {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        /* Form Elements */
+        .form-textarea {
+            width: 100%;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn-large {
+            width: 100%;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Success Message */
+        .success-message {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+            animation: bounceIn 0.8s ease-out;
+        }
+
+        .success-content h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .success-content p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .success-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Guidelines Section */
+        .guidelines-section {
+            margin-top: 2rem;
+        }
+
+        .guidelines-card {
+            padding: 2rem;
+        }
+
+        .guidelines-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .guidelines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .guideline-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .guideline-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(34, 197, 94, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--success-color);
+            flex-shrink: 0;
+        }
+
+        .guideline-item div {
+            flex: 1;
+        }
+
+        .guideline-item strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .guideline-item p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Image Modal */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        @keyframes modalFadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .completion-card {
+                padding: 1.5rem;
+            }
+
+            .task-info-content {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .task-info-image {
+                height: 200px;
+            }
+
+            .photo-placeholder {
+                padding: 2rem 1rem;
+            }
+
+            .placeholder-content i {
+                font-size: 3rem;
+            }
+
+            .photo-actions {
+                flex-direction: column;
+            }
+
+            .guidelines-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

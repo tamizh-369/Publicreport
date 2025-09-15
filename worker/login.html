@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Login - Chennai Clean</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="header-content">
+                <button class="btn-back" onclick="window.history.back()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="logo-section">
+                    <i class="fas fa-hard-hat logo-icon"></i>
+                    <h1 class="logo-text">Worker Login</h1>
+                </div>
+                <p class="subtitle">Access your assigned cleanup tasks</p>
+            </div>
+        </header>
+
+        <!-- Login Form -->
+        <main class="main-content">
+            <div class="glass-card login-card">
+                <form id="loginForm" class="login-form">
+                    <div class="form-header">
+                        <i class="fas fa-shield-alt form-icon"></i>
+                        <h2>Secure Login</h2>
+                        <p>Enter your credentials to access worker dashboard</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="workerPhone" class="form-label">
+                            <i class="fas fa-phone"></i> Phone Number
+                        </label>
+                        <input
+                            type="tel"
+                            id="workerPhone"
+                            class="form-input"
+                            placeholder="9876543001"
+                            required
+                            pattern="[6-9][0-9]{9}"
+                            maxlength="10"
+                            autocomplete="tel"
+                        >
+                        <div class="form-hint">Your registered mobile number</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="workerPassword" class="form-label">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <div class="password-input">
+                            <input
+                                type="password"
+                                id="workerPassword"
+                                class="form-input"
+                                placeholder="Enter your password"
+                                required
+                                autocomplete="current-password"
+                            >
+                            <button type="button" class="password-toggle" onclick="togglePassword()">
+                                <i class="fas fa-eye" id="passwordIcon"></i>
+                            </button>
+                        </div>
+                        <div class="form-hint">Default password: pass123</div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-large">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Login to Dashboard
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Worker Info Cards -->
+            <div class="info-section">
+                <div class="glass-card info-card">
+                    <div class="info-item">
+                        <i class="fas fa-tasks info-icon"></i>
+                        <h4>Your Tasks</h4>
+                        <p>View cleanup tasks assigned to your zone</p>
+                    </div>
+                </div>
+
+                <div class="glass-card info-card">
+                    <div class="info-item">
+                        <i class="fas fa-route info-icon"></i>
+                        <h4>Navigation</h4>
+                        <p>Get directions to dumping locations</p>
+                    </div>
+                </div>
+
+                <div class="glass-card info-card">
+                    <div class="info-item">
+                        <i class="fas fa-camera info-icon"></i>
+                        <h4>Completion Photos</h4>
+                        <p>Document your cleanup work</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample Credentials -->
+            <div class="glass-card sample-creds">
+                <h4><i class="fas fa-info-circle"></i> Sample Worker Accounts</h4>
+                <div class="creds-grid">
+                    <div class="cred-item">
+                        <strong>Zone 1 Worker:</strong>
+                        <span>Phone: 9876543001</span>
+                        <span>Password: pass123</span>
+                    </div>
+                    <div class="cred-item">
+                        <strong>Zone 8 Worker:</strong>
+                        <span>Phone: 9876543071</span>
+                        <span>Password: pass123</span>
+                    </div>
+                    <div class="cred-item">
+                        <strong>Zone 15 Worker:</strong>
+                        <span>Phone: 9876543150</span>
+                        <span>Password: pass123</span>
+                    </div>
+                </div>
+                <p class="creds-note">All worker accounts use the default password: <code>pass123</code></p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Floating Background Elements -->
+    <div class="floating-elements">
+        <div class="floating-element" style="--delay: 0s; --duration: 8s;"></div>
+        <div class="floating-element" style="--delay: 3s; --duration: 12s;"></div>
+        <div class="floating-element" style="--delay: 6s; --duration: 10s;"></div>
+    </div>
+
+    <!-- Load Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/supabase.js"></script>
+    <script src="../assets/app.js"></script>
+
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Supabase
+            await waitForSupabase();
+
+            // Check if already logged in
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser) {
+                const user = JSON.parse(storedUser);
+                if (user.user_type === 'worker') {
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+            }
+
+            // Setup form
+            setupLoginForm();
+
+            // Focus first input
+            document.getElementById('workerPhone').focus();
+        });
+
+        function setupLoginForm() {
+            const form = document.getElementById('loginForm');
+            const phoneInput = document.getElementById('workerPhone');
+
+            // Real-time phone validation
+            phoneInput.addEventListener('input', function() {
+                const phone = this.value;
+                const isValid = /^[6-9]\d{0,9}$/.test(phone);
+
+                if (phone.length > 0 && !isValid) {
+                    this.setCustomValidity('Invalid phone number');
+                    this.style.borderColor = 'var(--error-color)';
+                } else {
+                    this.setCustomValidity('');
+                    this.style.borderColor = 'var(--glass-border)';
+                }
+            });
+
+            // Form submission
+            form.addEventListener('submit', handleLogin);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+
+            try {
+                showLoading('Verifying credentials...');
+
+                const phone = document.getElementById('workerPhone').value.trim();
+                const password = document.getElementById('workerPassword').value.trim();
+
+                // Validation
+                if (!validatePhone(phone)) {
+                    throw new Error('Please enter a valid Indian mobile number');
+                }
+
+                if (!password) {
+                    throw new Error('Password is required');
+                }
+
+                // Check credentials
+                const { data: worker, error } = await window.supabase
+                    .from('users')
+                    .select('*')
+                    .eq('phone', phone)
+                    .eq('password', password)
+                    .eq('user_type', 'worker')
+                    .single();
+
+                if (error || !worker) {
+                    throw new Error('Invalid phone number or password');
+                }
+
+                // Save user session
+                saveUserSession(worker);
+
+                hideLoading();
+                showNotification('Login successful!', 'success');
+
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+
+            } catch (error) {
+                hideLoading();
+                console.error('Login error:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('workerPassword');
+            const passwordIcon = document.getElementById('passwordIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.className = 'fas fa-eye';
+            }
+        }
+
+        // Quick login function for demo
+        function quickLogin(phone, password) {
+            document.getElementById('workerPhone').value = phone;
+            document.getElementById('workerPassword').value = password;
+            document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+        }
+    </script>
+
+    <style>
+        /* Login-specific styles */
+        .login-card {
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        .form-header h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .form-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .password-input {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .password-toggle:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-large {
+            width: 100%;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .btn-back {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-back:hover {
+            transform: translateX(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Info Cards */
+        .info-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .info-card {
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .info-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .info-item h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .info-item p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Sample Credentials */
+        .sample-creds {
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .sample-creds h4 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .creds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .cred-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            padding: 1rem;
+            background: rgba(16, 185, 129, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .cred-item strong {
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        .cred-item span {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .creds-note {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .creds-note code {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary-color);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .login-card {
+                padding: 1.5rem;
+            }
+
+            .info-section {
+                grid-template-columns: 1fr;
+            }
+
+            .creds-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

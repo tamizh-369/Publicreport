@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Report - Chennai Clean</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="header-content">
+                <button class="btn-back" onclick="window.history.back()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="logo-section">
+                    <i class="fas fa-camera logo-icon"></i>
+                    <h1 class="logo-text">Report Illegal Dumping</h1>
+                </div>
+                <p class="subtitle">Help keep Chennai clean by reporting waste dumping</p>
+            </div>
+        </header>
+
+        <!-- Report Form -->
+        <main class="main-content">
+            <div class="glass-card report-card">
+                <form id="reportForm" class="report-form">
+                    <div class="form-header">
+                        <i class="fas fa-exclamation-triangle form-icon"></i>
+                        <h2>Document the Dumping Site</h2>
+                        <p>Take a photo and provide details about the illegal dumping</p>
+                    </div>
+
+                    <!-- Photo Capture Section -->
+                    <div class="form-group photo-section">
+                        <label class="form-label">
+                            <i class="fas fa-camera"></i> Photo Evidence
+                        </label>
+
+                        <div class="photo-capture">
+                            <div class="photo-placeholder" id="photoPlaceholder">
+                                <div class="placeholder-content">
+                                    <i class="fas fa-camera-retro"></i>
+                                    <h3>Take a Photo</h3>
+                                    <p>Capture clear evidence of the illegal dumping</p>
+                                    <button type="button" class="btn btn-primary" id="captureBtn">
+                                        <i class="fas fa-camera"></i>
+                                        Open Camera
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="photo-preview" id="photoPreview" style="display: none;">
+                                <img id="capturedImage" alt="Captured photo">
+                                <div class="photo-actions">
+                                    <button type="button" class="btn btn-secondary" id="retakeBtn">
+                                        <i class="fas fa-redo"></i>
+                                        Retake
+                                    </button>
+                                    <button type="button" class="btn btn-success" id="confirmBtn">
+                                        <i class="fas fa-check"></i>
+                                        Use Photo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display: none;">
+                        <div class="form-hint">Take a clear photo showing the dumped waste</div>
+                    </div>
+
+                    <!-- Location Section -->
+                    <div class="form-group location-section">
+                        <label class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> Location Details
+                        </label>
+
+                        <div class="location-info">
+                            <div class="location-status" id="locationStatus">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Getting your location...</span>
+                            </div>
+
+                            <div class="location-details" id="locationDetails" style="display: none;">
+                                <div class="detail-item">
+                                    <strong>Coordinates:</strong>
+                                    <span id="coordinatesText">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Detected Zone:</strong>
+                                    <span id="detectedZone">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Accuracy:</strong>
+                                    <span id="accuracyText">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-secondary btn-small" id="refreshLocationBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh Location
+                        </button>
+                    </div>
+
+                    <!-- Manual Zone Selection -->
+                    <div class="form-group" id="manualZoneSection" style="display: none;">
+                        <label for="manualZone" class="form-label">
+                            <i class="fas fa-map"></i> Select Zone Manually
+                        </label>
+                        <select id="manualZone" class="form-select">
+                            <option value="">Choose your zone</option>
+                            <option value="1">Zone 1 - Thiruvottriyur</option>
+                            <option value="2">Zone 2 - Manali</option>
+                            <option value="3">Zone 3 - Madhavaram</option>
+                            <option value="4">Zone 4 - Tondiarpet</option>
+                            <option value="5">Zone 5 - Royapuram</option>
+                            <option value="6">Zone 6 - Thiru-Vi-Ka Nagar</option>
+                            <option value="7">Zone 7 - Ambattur</option>
+                            <option value="8">Zone 8 - Anna Nagar</option>
+                            <option value="9">Zone 9 - Teynampet</option>
+                            <option value="10">Zone 10 - Kodambakkam</option>
+                            <option value="11">Zone 11 - Valasaravakkam</option>
+                            <option value="12">Zone 12 - Alandur</option>
+                            <option value="13">Zone 13 - Adyar</option>
+                            <option value="14">Zone 14 - Perungudi</option>
+                            <option value="15">Zone 15 - Sholinganallur</option>
+                        </select>
+                        <div class="form-hint">Select the zone where the dumping is located</div>
+                    </div>
+
+                    <!-- Description Section -->
+                    <div class="form-group">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-comment"></i> Description (Optional)
+                        </label>
+                        <textarea
+                            id="description"
+                            class="form-textarea"
+                            placeholder="Describe the type of waste, size, or any additional details..."
+                            rows="4"
+                            maxlength="500"
+                        ></textarea>
+                        <div class="form-hint">
+                            <span id="charCount">0</span>/500 characters
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-large" id="submitBtn" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                            Submit Report
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Success Message -->
+                <div id="successMessage" class="success-message" style="display: none;">
+                    <div class="success-content">
+                        <i class="fas fa-check-circle success-icon"></i>
+                        <h3>Report Submitted Successfully!</h3>
+                        <p>Your report has been received and will be assigned to a cleanup worker shortly.</p>
+                        <div class="success-actions">
+                            <button class="btn btn-primary" onclick="createAnotherReport()">
+                                <i class="fas fa-plus"></i>
+                                Report Another
+                            </button>
+                            <button class="btn btn-secondary" onclick="goToDashboard()">
+                                <i class="fas fa-tachometer-alt"></i>
+                                View Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips Section -->
+            <div class="tips-section">
+                <div class="glass-card tips-card">
+                    <h3><i class="fas fa-lightbulb"></i> Reporting Tips</h3>
+                    <div class="tips-grid">
+                        <div class="tip-item">
+                            <i class="fas fa-camera tip-icon"></i>
+                            <div>
+                                <strong>Clear Photos</strong>
+                                <p>Take well-lit photos showing the extent of dumping</p>
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <i class="fas fa-map-marker-alt tip-icon"></i>
+                            <div>
+                                <strong>Accurate Location</strong>
+                                <p>Ensure GPS is enabled for precise location detection</p>
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <i class="fas fa-shield-alt tip-icon"></i>
+                            <div>
+                                <strong>Stay Safe</strong>
+                                <p>Don't approach hazardous waste or unsafe areas</p>
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <i class="fas fa-clock tip-icon"></i>
+                            <div>
+                                <strong>Quick Response</strong>
+                                <p>Reports are typically assigned within 2-4 hours</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Floating Background Elements -->
+    <div class="floating-elements">
+        <div class="floating-element" style="--delay: 0s; --duration: 8s;"></div>
+        <div class="floating-element" style="--delay: 3s; --duration: 12s;"></div>
+        <div class="floating-element" style="--delay: 6s; --duration: 10s;"></div>
+    </div>
+
+    <!-- Load Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/supabase.js"></script>
+    <script src="../assets/app.js"></script>
+
+    <script>
+        // Use the existing currentUser from app.js or declare it if it doesn't exist
+        let reportCurrentUser = window.currentUser || null;
+        let capturedPhoto = null;
+        let currentLocation = null;
+        let detectedZone = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Supabase
+            await waitForSupabase();
+
+            // Check authentication
+            const storedUser = localStorage.getItem('currentUser');
+            if (!storedUser) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            reportCurrentUser = JSON.parse(storedUser);
+            if (reportCurrentUser.user_type !== 'citizen') {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            // Initialize components
+            initializeCamera();
+            initializeLocation();
+            initializeForm();
+        });
+
+        function initializeCamera() {
+            const captureBtn = document.getElementById('captureBtn');
+            const photoInput = document.getElementById('photoInput');
+            const retakeBtn = document.getElementById('retakeBtn');
+            const confirmBtn = document.getElementById('confirmBtn');
+
+            captureBtn.addEventListener('click', function() {
+                photoInput.click();
+            });
+
+            photoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        showPhotoPreview(e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            retakeBtn.addEventListener('click', function() {
+                hidePhotoPreview();
+                photoInput.value = '';
+                capturedPhoto = null;
+                updateSubmitButton();
+            });
+
+            confirmBtn.addEventListener('click', function() {
+                capturedPhoto = photoInput.files[0];
+                document.getElementById('photoPlaceholder').style.display = 'none';
+                showNotification('Photo confirmed! Now add location details.', 'success');
+                updateSubmitButton();
+            });
+        }
+
+        function showPhotoPreview(imageSrc) {
+            const placeholder = document.getElementById('photoPlaceholder');
+            const preview = document.getElementById('photoPreview');
+            const capturedImage = document.getElementById('capturedImage');
+
+            capturedImage.src = imageSrc;
+            placeholder.style.display = 'none';
+            preview.style.display = 'block';
+        }
+
+        function hidePhotoPreview() {
+            const placeholder = document.getElementById('photoPlaceholder');
+            const preview = document.getElementById('photoPreview');
+
+            preview.style.display = 'none';
+            placeholder.style.display = 'block';
+        }
+
+        async function initializeLocation() {
+            const refreshBtn = document.getElementById('refreshLocationBtn');
+
+            refreshBtn.addEventListener('click', function() {
+                getCurrentLocationDetails();
+            });
+
+            // Get location on page load
+            await getCurrentLocationDetails();
+        }
+
+        async function getCurrentLocationDetails() {
+            const locationStatus = document.getElementById('locationStatus');
+            const locationDetails = document.getElementById('locationDetails');
+            const manualZoneSection = document.getElementById('manualZoneSection');
+
+            try {
+                locationStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Getting your location...</span>';
+                locationStatus.className = 'location-status loading';
+
+                const position = await getCurrentLocation();
+                currentLocation = position;
+
+                // Update coordinates
+                document.getElementById('coordinatesText').textContent =
+                    `${position.latitude.toFixed(6)}, ${position.longitude.toFixed(6)}`;
+
+                document.getElementById('accuracyText').textContent =
+                    `±${Math.round(position.accuracy)}m`;
+
+                // Detect zone
+                const zone = detectZoneFromCoordinates(position.latitude, position.longitude);
+
+                if (zone) {
+                    detectedZone = zone;
+                    document.getElementById('detectedZone').textContent = zone.name;
+                    locationStatus.innerHTML = '<i class="fas fa-check-circle"></i><span>Location detected successfully</span>';
+                    locationStatus.className = 'location-status success';
+                    manualZoneSection.style.display = 'none';
+                } else {
+                    document.getElementById('detectedZone').textContent = 'Zone not detected';
+                    locationStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Please select zone manually</span>';
+                    locationStatus.className = 'location-status warning';
+                    manualZoneSection.style.display = 'block';
+                }
+
+                locationDetails.style.display = 'block';
+                updateSubmitButton();
+
+            } catch (error) {
+                console.error('Location error:', error);
+                locationStatus.innerHTML = '<i class="fas fa-times-circle"></i><span>Location access denied</span>';
+                locationStatus.className = 'location-status error';
+                manualZoneSection.style.display = 'block';
+                showNotification('Please enable location access or select zone manually', 'warning');
+            }
+        }
+
+        function initializeForm() {
+            const form = document.getElementById('reportForm');
+            const description = document.getElementById('description');
+            const charCount = document.getElementById('charCount');
+            const manualZone = document.getElementById('manualZone');
+
+            // Character counter
+            description.addEventListener('input', function() {
+                const count = this.value.length;
+                charCount.textContent = count;
+
+                if (count > 450) {
+                    charCount.style.color = 'var(--warning-color)';
+                } else {
+                    charCount.style.color = 'var(--text-muted)';
+                }
+            });
+
+            // Manual zone selection
+            manualZone.addEventListener('change', function() {
+                if (this.value) {
+                    detectedZone = {
+                        id: parseInt(this.value),
+                        name: this.options[this.selectedIndex].text
+                    };
+                    updateSubmitButton();
+                }
+            });
+
+            // Form submission
+            form.addEventListener('submit', handleFormSubmit);
+        }
+
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const hasPhoto = capturedPhoto !== null;
+            const hasLocation = currentLocation !== null || detectedZone !== null;
+
+            if (hasPhoto && hasLocation) {
+                submitBtn.disabled = false;
+                submitBtn.className = 'btn btn-primary btn-large';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.className = 'btn btn-primary btn-large disabled';
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            if (!capturedPhoto) {
+                showNotification('Please take a photo first', 'error');
+                return;
+            }
+
+            if (!currentLocation && !detectedZone) {
+                showNotification('Location information is required', 'error');
+                return;
+            }
+
+            try {
+                showLoading('Submitting your report...');
+
+                // Upload photo
+                const photoUrl = await uploadImage(capturedPhoto);
+
+                // Determine zone
+                let zoneId = detectedZone ? detectedZone.id : null;
+                if (!zoneId) {
+                    const manualZoneSelect = document.getElementById('manualZone');
+                    zoneId = parseInt(manualZoneSelect.value);
+                }
+
+                if (!zoneId) {
+                    throw new Error('Zone information is required');
+                }
+
+                // Create report
+                const reportData = {
+                    citizen_id: reportCurrentUser.id,
+                    photo_url: photoUrl,
+                    latitude: currentLocation ? currentLocation.latitude : 0,
+                    longitude: currentLocation ? currentLocation.longitude : 0,
+                    zone_id: zoneId,
+                    description: document.getElementById('description').value.trim() || null,
+                    status: 'pending'
+                };
+
+                const { data: report, error } = await window.supabase
+                    .from('reports')
+                    .insert([reportData])
+                    .select()
+                    .single();
+
+                if (error) {
+                    throw error;
+                }
+
+                // Assign worker automatically
+                await assignWorkerToReport(report.id, zoneId);
+
+                hideLoading();
+
+                // Show success message
+                document.getElementById('reportForm').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'block';
+
+                showNotification('Report submitted successfully! A worker will be assigned shortly.', 'success');
+
+            } catch (error) {
+                hideLoading();
+                console.error('Submit error:', error);
+                showNotification(error.message || 'Failed to submit report. Please try again.', 'error');
+            }
+        }
+
+        function createAnotherReport() {
+            // Reset form
+            document.getElementById('reportForm').reset();
+            document.getElementById('photoInput').value = '';
+            capturedPhoto = null;
+            currentLocation = null;
+            detectedZone = null;
+
+            // Reset UI
+            hidePhotoPreview();
+            document.getElementById('locationDetails').style.display = 'none';
+            document.getElementById('manualZoneSection').style.display = 'none';
+            document.getElementById('charCount').textContent = '0';
+
+            // Show form again
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('reportForm').style.display = 'block';
+
+            // Reinitialize location
+            getCurrentLocationDetails();
+            updateSubmitButton();
+        }
+
+        function goToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+
+    <style>
+        /* Report-specific styles */
+        .btn-back {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-back:hover {
+            transform: translateX(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .report-card {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-icon {
+            font-size: 3rem;
+            color: var(--warning-color);
+            margin-bottom: 1rem;
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        .form-header h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .form-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Photo Section */
+        .photo-section {
+            margin-bottom: 2rem;
+        }
+
+        .photo-capture {
+            border: 2px dashed var(--glass-border);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .photo-capture:hover {
+            border-color: var(--primary-color);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .photo-placeholder {
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .placeholder-content i {
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .placeholder-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .placeholder-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .photo-preview {
+            position: relative;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .photo-actions {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        /* Location Section */
+        .location-section {
+            margin-bottom: 2rem;
+        }
+
+        .location-info {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .location-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .location-status.loading { color: var(--primary-color); }
+        .location-status.success { color: var(--success-color); }
+        .location-status.warning { color: var(--warning-color); }
+        .location-status.error { color: var(--error-color); }
+
+        .location-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .detail-item strong {
+            color: var(--text-primary);
+        }
+
+        .detail-item span {
+            color: var(--text-secondary);
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* Form Elements */
+        .form-textarea {
+            width: 100%;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn-large {
+            width: 100%;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Success Message */
+        .success-message {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+            animation: bounceIn 0.8s ease-out;
+        }
+
+        .success-content h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .success-content p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .success-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Tips Section */
+        .tips-section {
+            margin-top: 2rem;
+        }
+
+        .tips-card {
+            padding: 2rem;
+        }
+
+        .tips-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .tip-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .tip-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(16, 185, 129, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            flex-shrink: 0;
+        }
+
+        .tip-item div {
+            flex: 1;
+        }
+
+        .tip-item strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .tip-item p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .report-card {
+                padding: 1.5rem;
+            }
+
+            .photo-placeholder {
+                padding: 2rem 1rem;
+            }
+
+            .placeholder-content i {
+                font-size: 3rem;
+            }
+
+            .photo-actions {
+                flex-direction: column;
+            }
+
+            .tips-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .success-actions {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .detail-item {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .photo-preview img {
+                height: 200px;
+            }
+        }
+    </style>
+</body>
+</html>

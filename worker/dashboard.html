@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Dashboard - Chennai Clean</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo-section">
+                        <i class="fas fa-hard-hat logo-icon"></i>
+                        <div class="user-info">
+                            <h1 class="logo-text" id="welcomeText">Welcome, Worker</h1>
+                            <p class="subtitle" id="workerZone">Zone: Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-secondary" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="glass-card stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="assignedTasksCount">0</div>
+                        <div class="stat-label">Assigned Tasks</div>
+                    </div>
+                </div>
+
+                <div class="glass-card stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="completedTasksCount">0</div>
+                        <div class="stat-label">Completed Today</div>
+                    </div>
+                </div>
+
+                <div class="glass-card stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="weeklyTasksCount">0</div>
+                        <div class="stat-label">This Week</div>
+                    </div>
+                </div>
+
+                <div class="glass-card stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalCompletedCount">0</div>
+                        <div class="stat-label">Total Completed</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tasks Section -->
+        <section class="tasks-section">
+            <div class="section-header">
+                <h2><i class="fas fa-tasks"></i> My Assigned Tasks</h2>
+                <div class="task-filters">
+                    <button class="filter-btn active" data-filter="assigned">Assigned</button>
+                    <button class="filter-btn" data-filter="completed">Completed</button>
+                    <button class="filter-btn" data-filter="all">All</button>
+                </div>
+            </div>
+
+            <div class="tasks-container">
+                <div class="glass-card empty-state" id="emptyState">
+                    <div class="empty-content">
+                        <i class="fas fa-clipboard-list empty-icon"></i>
+                        <h3>No Tasks Assigned</h3>
+                        <p>New cleanup tasks will appear here when assigned to you</p>
+                        <button class="btn btn-primary" onclick="refreshTasks()">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh Tasks
+                        </button>
+                    </div>
+                </div>
+
+                <div id="tasksList" class="tasks-list">
+                    <!-- Tasks will be loaded here dynamically -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Floating Background Elements -->
+    <div class="floating-elements">
+        <div class="floating-element" style="--delay: 0s; --duration: 8s;"></div>
+        <div class="floating-element" style="--delay: 3s; --duration: 12s;"></div>
+        <div class="floating-element" style="--delay: 6s; --duration: 10s;"></div>
+    </div>
+
+    <!-- Load Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/supabase.js"></script>
+    <script src="../assets/app.js"></script>
+
+    <script>
+        // Use the existing currentUser from app.js or declare it if it doesn't exist
+        let workerCurrentUser = window.currentUser || null;
+        let allTasks = [];
+        let currentFilter = 'assigned';
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Supabase
+            await waitForSupabase();
+
+            // Check authentication
+            const storedUser = localStorage.getItem('currentUser');
+            if (!storedUser) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            workerCurrentUser = JSON.parse(storedUser);
+            if (workerCurrentUser.user_type !== 'worker') {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            // Initialize dashboard
+            await initializeDashboard();
+            await loadWorkerTasks();
+            setupRealtimeUpdates();
+            setupFilterButtons();
+        });
+
+        async function initializeDashboard() {
+            // Update welcome text
+            document.getElementById('welcomeText').textContent = `Welcome, ${workerCurrentUser.name}`;
+
+            // Update zone info
+            if (workerCurrentUser.zone_id) {
+                const zoneName = await getZoneName(workerCurrentUser.zone_id);
+                document.getElementById('workerZone').textContent = `Zone: ${zoneName}`;
+            }
+        }
+
+        async function getZoneName(zoneId) {
+            try {
+                const { data: zone } = await window.supabase
+                    .from('zones')
+                    .select('name')
+                    .eq('id', zoneId)
+                    .single();
+
+                return zone ? zone.name : 'Unknown';
+            } catch (error) {
+                return 'Unknown';
+            }
+        }
+
+        async function loadWorkerTasks() {
+            try {
+                showLoading('Loading your tasks...');
+
+                // First, get the reports data
+                const { data: reports, error: reportsError } = await window.supabase
+                    .from('reports')
+                    .select('*')
+                    .eq('worker_id', workerCurrentUser.id)
+                    .order('assigned_at', { ascending: false });
+
+                if (reportsError) {
+                    throw reportsError;
+                }
+
+                // Then get citizen and zone data separately
+                const tasks = [];
+                for (const report of reports || []) {
+                    const taskData = { ...report };
+
+                    // Get citizen data
+                    if (report.citizen_id) {
+                        const { data: citizen } = await window.supabase
+                            .from('citizens')
+                            .select('name, phone')
+                            .eq('id', report.citizen_id)
+                            .single();
+                        taskData.citizen = citizen;
+                    }
+
+                    // Get zone data
+                    if (report.zone_id) {
+                        const { data: zone } = await window.supabase
+                            .from('zones')
+                            .select('name')
+                            .eq('id', report.zone_id)
+                            .single();
+                        taskData.zone = zone;
+                    }
+
+                    tasks.push(taskData);
+                }
+
+                allTasks = tasks;
+                updateStatsCards();
+                displayTasks(allTasks);
+
+                hideLoading();
+
+            } catch (error) {
+                hideLoading();
+                console.error('Error loading tasks:', error);
+                showNotification('Failed to load tasks', 'error');
+            }
+        }
+
+        function updateStatsCards() {
+            const assigned = allTasks.filter(t => t.status === 'assigned').length;
+            const completedToday = allTasks.filter(t => {
+                if (!t.completed_at) return false;
+                const today = new Date();
+                const completedDate = new Date(t.completed_at);
+                return completedDate.toDateString() === today.toDateString();
+            }).length;
+
+            const thisWeek = allTasks.filter(t => {
+                if (!t.completed_at) return false;
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                return new Date(t.completed_at) >= weekAgo;
+            }).length;
+
+            const totalCompleted = allTasks.filter(t =>
+                t.status === 'completed' || t.status === 'verified'
+            ).length;
+
+            document.getElementById('assignedTasksCount').textContent = assigned;
+            document.getElementById('completedTasksCount').textContent = completedToday;
+            document.getElementById('weeklyTasksCount').textContent = thisWeek;
+            document.getElementById('totalCompletedCount').textContent = totalCompleted;
+
+            // Animate numbers
+            animateNumbers();
+        }
+
+        function displayTasks(tasks) {
+            const tasksList = document.getElementById('tasksList');
+            const emptyState = document.getElementById('emptyState');
+
+            // Filter tasks based on current filter
+            let filteredTasks = tasks;
+            if (currentFilter === 'assigned') {
+                filteredTasks = tasks.filter(t => t.status === 'assigned');
+            } else if (currentFilter === 'completed') {
+                filteredTasks = tasks.filter(t => t.status === 'completed' || t.status === 'verified');
+            }
+
+            if (filteredTasks.length === 0) {
+                emptyState.style.display = 'block';
+                tasksList.innerHTML = '';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+
+            tasksList.innerHTML = filteredTasks.map(task => `
+                <div class="glass-card task-card" data-status="${task.status}">
+                    <div class="task-header">
+                        <div class="task-status">
+                            <span class="status-badge status-${task.status}">
+                                <i class="fas fa-${getTaskStatusIcon(task.status)}"></i>
+                                ${getTaskStatusText(task.status)}
+                            </span>
+                        </div>
+                        <div class="task-time">
+                            ${getTimeAgo(task.assigned_at)}
+                        </div>
+                    </div>
+
+                    <div class="task-content">
+                        <div class="task-image">
+                            <img src="${task.photo_url}" alt="Dumping site" loading="lazy">
+                            <div class="image-overlay">
+                                <i class="fas fa-search-plus" onclick="viewImage('${task.photo_url}')"></i>
+                            </div>
+                        </div>
+
+                        <div class="task-details">
+                            <div class="task-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${task.zone?.name || 'Zone ' + task.zone_id}</span>
+                            </div>
+
+                            <div class="task-coordinates">
+                                <i class="fas fa-crosshairs"></i>
+                                <span>${task.latitude.toFixed(6)}, ${task.longitude.toFixed(6)}</span>
+                            </div>
+
+                            ${task.description ? `
+                                <div class="task-description">
+                                    <i class="fas fa-comment"></i>
+                                    <span>${task.description}</span>
+                                </div>
+                            ` : ''}
+
+                            <div class="task-citizen">
+                                <i class="fas fa-user"></i>
+                                <span>Reported by: ${task.citizen?.name || 'Citizen'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="task-actions">
+                        ${task.status === 'assigned' ? `
+                            <button class="btn btn-secondary" onclick="navigateToLocation(${task.latitude}, ${task.longitude})">
+                                <i class="fas fa-directions"></i>
+                                Navigate
+                            </button>
+                            <button class="btn btn-primary" onclick="completeTask('${task.id}')">
+                                <i class="fas fa-check"></i>
+                                Mark Complete
+                            </button>
+                        ` : `
+                            <div class="completion-info">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Completed on ${formatDateTime(task.completed_at)}</span>
+                                ${task.worker_photo_url ? `
+                                    <img src="${task.worker_photo_url}" alt="Completion photo"
+                                         onclick="viewImage('${task.worker_photo_url}')"
+                                         class="completion-thumb">
+                                ` : ''}
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupFilterButtons() {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active button
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Update filter
+                    currentFilter = this.dataset.filter;
+                    displayTasks(allTasks);
+                });
+            });
+        }
+
+        function getTaskStatusIcon(status) {
+            switch (status) {
+                case 'assigned': return 'clock';
+                case 'completed': return 'check-circle';
+                case 'verified': return 'badge-check';
+                default: return 'question-circle';
+            }
+        }
+
+        function getTaskStatusText(status) {
+            switch (status) {
+                case 'assigned': return 'Assigned to You';
+                case 'completed': return 'Completed';
+                case 'verified': return 'Verified';
+                default: return 'Unknown';
+            }
+        }
+
+        function setupRealtimeUpdates() {
+            window.supabase
+                .channel('worker-tasks')
+                .on('postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'reports',
+                        filter: `worker_id=eq.${workerCurrentUser.id}`
+                    },
+                    (payload) => {
+                        if (payload.eventType === 'UPDATE' &&
+                            payload.old.status === 'pending' &&
+                            payload.new.status === 'assigned') {
+                            showNotification('New cleanup task assigned to you!', 'info');
+                        }
+                        loadWorkerTasks();
+                    }
+                )
+                .subscribe();
+        }
+
+        function navigateToLocation(lat, lng) {
+            // Open in Google Maps or default maps app
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            window.open(url, '_blank');
+        }
+
+        async function completeTask(taskId) {
+            if (confirm('Are you sure you want to mark this task as complete?')) {
+                window.location.href = `complete.html?taskId=${taskId}`;
+            }
+        }
+
+        function viewImage(imageUrl) {
+            // Create modal for viewing images
+            const modal = document.createElement('div');
+            modal.className = 'image-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="modal-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </span>
+                    <img src="${imageUrl}" alt="Full size image">
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        function refreshTasks() {
+            loadWorkerTasks();
+            showNotification('Tasks refreshed', 'info');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('currentUser');
+                window.location.href = '../index.html';
+            }
+        }
+
+        function animateNumbers() {
+            const numbers = document.querySelectorAll('.stat-number');
+            numbers.forEach(num => {
+                const target = parseInt(num.textContent);
+                let current = 0;
+                const increment = Math.max(1, target / 20);
+
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        num.textContent = target;
+                        clearInterval(timer);
+                    } else {
+                        num.textContent = Math.floor(current);
+                    }
+                }, 50);
+            });
+        }
+
+        // Update tasks list function for real-time updates
+        function updateTasksList() {
+            loadWorkerTasks();
+        }
+    </script>
+
+    <style>
+        /* Worker Dashboard specific styles */
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--primary-color);
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Tasks Section */
+        .tasks-section {
+            margin-top: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .task-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Task Cards */
+        .tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .task-card {
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-assigned { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .status-completed { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .status-verified { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+
+        .task-time {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .task-content {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .task-image {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 120px;
+        }
+
+        .task-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+        }
+
+        .image-overlay i {
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .task-image:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .task-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .task-details > div {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .task-details i {
+            width: 16px;
+            color: var(--primary-color);
+        }
+
+        .task-coordinates {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem !important;
+        }
+
+        /* Task Actions */
+        .task-actions {
+            padding: 1rem 0;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .completion-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--success-color);
+            font-size: 0.9rem;
+        }
+
+        .completion-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid var(--success-color);
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .empty-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .empty-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Image Modal */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        @keyframes modalFadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .task-filters {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .task-content {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .task-image {
+                height: 200px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .task-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

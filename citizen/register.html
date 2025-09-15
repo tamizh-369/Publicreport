@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citizen Registration - Chennai Clean</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
+    <link rel="stylesheet" href="../assets/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="header-content">
+                <button class="btn-back" onclick="window.history.back()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="logo-section">
+                    <i class="fas fa-user-plus logo-icon"></i>
+                    <h1 class="logo-text">Citizen Registration</h1>
+                </div>
+                <p class="subtitle">Join the movement for a cleaner Chennai</p>
+            </div>
+        </header>
+
+        <!-- Registration Form -->
+        <main class="main-content">
+            <div class="glass-card registration-card">
+                <form id="registrationForm" class="registration-form">
+                    <div class="form-header">
+                        <i class="fas fa-leaf form-icon"></i>
+                        <h2>Create Your Account</h2>
+                        <p>Start reporting illegal dumping in your area</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="citizenName" class="form-label">
+                            <i class="fas fa-user"></i> Full Name
+                        </label>
+                        <input
+                            type="text"
+                            id="citizenName"
+                            class="form-input"
+                            placeholder="Enter your full name"
+                            required
+                            maxlength="100"
+                            autocomplete="name"
+                        >
+                        <div class="form-hint">This name will be displayed on your reports</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="citizenPhone" class="form-label">
+                            <i class="fas fa-phone"></i> Phone Number
+                        </label>
+                        <input
+                            type="tel"
+                            id="citizenPhone"
+                            class="form-input"
+                            placeholder="8876543210"
+                            required
+                            pattern="[6-9][0-9]{9}"
+                            maxlength="10"
+                            autocomplete="tel"
+                        >
+                        <div class="form-hint">Indian mobile number (10 digits) - Try: 8876543210</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="citizenZone" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> Preferred Zone (Optional)
+                        </label>
+                        <select id="citizenZone" class="form-select">
+                            <option value="">Auto-detect from location</option>
+                            <option value="1">Zone 1 - Thiruvottriyur</option>
+                            <option value="2">Zone 2 - Manali</option>
+                            <option value="3">Zone 3 - Madhavaram</option>
+                            <option value="4">Zone 4 - Tondiarpet</option>
+                            <option value="5">Zone 5 - Royapuram</option>
+                            <option value="6">Zone 6 - Thiru-Vi-Ka Nagar</option>
+                            <option value="7">Zone 7 - Ambattur</option>
+                            <option value="8">Zone 8 - Anna Nagar</option>
+                            <option value="9">Zone 9 - Teynampet</option>
+                            <option value="10">Zone 10 - Kodambakkam</option>
+                            <option value="11">Zone 11 - Valasaravakkam</option>
+                            <option value="12">Zone 12 - Alandur</option>
+                            <option value="13">Zone 13 - Adyar</option>
+                            <option value="14">Zone 14 - Perungudi</option>
+                            <option value="15">Zone 15 - Sholinganallur</option>
+                        </select>
+                        <div class="form-hint">We'll detect your zone automatically when reporting</div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-large">
+                            <i class="fas fa-user-plus"></i>
+                            Register & Continue
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Success Message -->
+                <div id="successMessage" class="success-message" style="display: none;">
+                    <div class="success-content">
+                        <i class="fas fa-check-circle success-icon"></i>
+                        <h3>Registration Successful!</h3>
+                        <p>Welcome to Chennai Clean community</p>
+                        <button class="btn btn-primary" onclick="goToDashboard()">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Go to Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Already Registered Prompt -->
+            <div class="glass-card login-prompt">
+                <div class="login-prompt-content">
+                    <h4><i class="fas fa-sign-in-alt"></i> Already Registered?</h4>
+                    <p>If you've already created an account, you can access it directly.</p>
+                    <button class="btn btn-secondary" onclick="showExistingUserLogin()">
+                        <i class="fas fa-user"></i>
+                        I'm an Existing User
+                    </button>
+                </div>
+            </div>
+
+            <!-- Info Cards -->
+            <div class="info-section">
+                <div class="glass-card info-card">
+                    <div class="info-item">
+                        <i class="fas fa-camera info-icon"></i>
+                        <h4>Photo Reports</h4>
+                        <p>Take photos of illegal dumping sites</p>
+                    </div>
+                </div>
+
+                <div class="glass-card info-card">
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt info-icon"></i>
+                        <h4>GPS Tracking</h4>
+                        <p>Automatic location detection</p>
+                    </div>
+                </div>
+
+                <div class="glass-card info-card">
+                    <div class="info-item">
+                        <i class="fas fa-bell info-icon"></i>
+                        <h4>Status Updates</h4>
+                        <p>Get notified when tasks are completed</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Floating Background Elements -->
+    <div class="floating-elements">
+        <div class="floating-element" style="--delay: 0s; --duration: 8s;"></div>
+        <div class="floating-element" style="--delay: 2s; --duration: 12s;"></div>
+        <div class="floating-element" style="--delay: 4s; --duration: 10s;"></div>
+    </div>
+
+    <!-- Load Supabase first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Load our files after Supabase -->
+    <script src="../assets/supabase.js"></script>
+    <script src="../assets/app.js"></script>
+
+    <script>
+        // Enhanced form submission handler - NO MORE "already registered" ERRORS
+document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    try {
+        showLoading('Checking your registration...');
+
+        const name = document.getElementById('citizenName').value.trim();
+        const phone = document.getElementById('citizenPhone').value.trim();
+        const zoneId = document.getElementById('citizenZone').value || null;
+
+        // Validation
+        if (!validateRequired(name, 'Name')) {
+            hideLoading();
+            return;
+        }
+        if (!validatePhone(phone)) {
+            hideLoading();
+            throw new Error('Please enter a valid Indian mobile number');
+        }
+
+        // Make sure Supabase is ready
+        if (!window.supabase) {
+            hideLoading();
+            throw new Error('System not ready. Please refresh and try again.');
+        }
+
+        // Check if phone already exists - WITH BETTER ERROR HANDLING
+        const { data: existingUser, error: queryError } = await window.supabase
+            .from('users')
+            .select('*')
+            .eq('phone', phone)
+            .maybeSingle(); // Use maybeSingle() instead of single()
+
+        if (queryError && queryError.code !== 'PGRST116') {
+            hideLoading();
+            throw queryError;
+        }
+
+        if (existingUser) {
+            hideLoading();
+
+            // If user is already a citizen, offer to log them in
+            if (existingUser.user_type === 'citizen') {
+                if (confirm(`Welcome back, ${existingUser.name}! This phone number is already registered. Would you like to go to your dashboard?`)) {
+                    saveUserSession(existingUser);
+                    showNotification(`Welcome back, ${existingUser.name}!`, 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                }
+                return;
+            } else {
+                showNotification('This phone number is registered as a different user type. Please contact admin.', 'error');
+                return;
+            }
+        }
+
+        // Create new user if doesn't exist
+        const { data: newUser, error: insertError } = await window.supabase
+            .from('users')
+            .insert([{
+                phone: phone,
+                name: name,
+                user_type: 'citizen',
+                zone_id: zoneId ? parseInt(zoneId) : null
+            }])
+            .select()
+            .single();
+
+        if (insertError) {
+            hideLoading();
+            throw insertError;
+        }
+
+        // Save user session
+        saveUserSession(newUser);
+
+        hideLoading();
+
+        // Show success message
+        document.getElementById('registrationForm').style.display = 'none';
+        document.getElementById('successMessage').style.display = 'block';
+
+        showNotification('Registration successful! Welcome to Chennai Clean', 'success');
+
+    } catch (error) {
+        hideLoading();
+        console.error('Registration error:', error);
+        showNotification(error.message, 'error');
+    }
+});
+
+
+        function goToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        function showExistingUserLogin() {
+            const phone = prompt('Enter your registered phone number:');
+            if (phone && validatePhone(phone)) {
+                checkExistingUser(phone);
+            } else if (phone) {
+                showNotification('Please enter a valid 10-digit phone number', 'error');
+            }
+        }
+
+        async function checkExistingUser(phone) {
+            try {
+                showLoading('Checking your account...');
+
+                const { data: user } = await window.supabase
+                    .from('users')
+                    .select('*')
+                    .eq('phone', phone)
+                    .eq('user_type', 'citizen')
+                    .single();
+
+                if (user) {
+                    saveUserSession(user);
+                    hideLoading();
+                    showNotification(`Welcome back, ${user.name}!`, 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                } else {
+                    hideLoading();
+                    showNotification('No account found with this phone number. Please register first.', 'warning');
+                }
+
+            } catch (error) {
+                hideLoading();
+                showNotification('Account not found. Please register as a new user.', 'warning');
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Supabase
+            await waitForSupabase();
+
+            // Check if already logged in
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser) {
+                const user = JSON.parse(storedUser);
+                if (user.user_type === 'citizen') {
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+            }
+
+            // Focus first input
+            document.getElementById('citizenName').focus();
+
+            // Real-time phone validation
+            const phoneInput = document.getElementById('citizenPhone');
+            phoneInput.addEventListener('input', function() {
+                const phone = this.value;
+                const isValid = /^[6-9]\d{0,9}$/.test(phone);
+
+                if (phone.length > 0 && !isValid) {
+                    this.setCustomValidity('Invalid phone number');
+                    this.style.borderColor = 'var(--error-color)';
+                } else {
+                    this.setCustomValidity('');
+                    this.style.borderColor = 'var(--glass-border)';
+                }
+            });
+        });
+    </script>
+
+    <style>
+        .registration-card {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        .form-header h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .form-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-hint {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .btn-large {
+            width: 100%;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .btn-back {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-back:hover {
+            transform: translateX(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+            animation: bounceIn 0.8s ease-out;
+        }
+
+        .success-content h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .success-content p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* Login Prompt Styles */
+        .login-prompt {
+            margin: 1rem 0;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .login-prompt-content h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .login-prompt-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .info-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .info-card {
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .info-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .info-item h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .info-item p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .registration-card {
+                padding: 1.5rem;
+            }
+
+            .info-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

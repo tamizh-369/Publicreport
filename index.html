@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chennai Clean - Waste Management</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <i class="fas fa-leaf logo-icon"></i>
+                    <h1 class="logo-text">Chennai Clean</h1>
+                </div>
+                <p class="subtitle">Making Chennai cleaner, one report at a time</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="welcome-section">
+                <div class="glass-card welcome-card">
+                    <div class="card-content">
+                        <i class="fas fa-city welcome-icon"></i>
+                        <h2 class="welcome-title">Welcome to Chennai Clean</h2>
+                        <p class="welcome-text">Report illegal dumping, connect with cleanup workers, and contribute to a cleaner Chennai</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Type Selection -->
+            <div class="user-types">
+                <div class="glass-card user-card citizen-card" onclick="navigateTo('citizen')">
+                    <div class="card-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h3>I'm a Citizen</h3>
+                    <p>Report illegal dumping in your area</p>
+                    <div class="card-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+
+                <div class="glass-card user-card worker-card" onclick="navigateTo('worker')">
+                    <div class="card-icon">
+                        <i class="fas fa-hard-hat"></i>
+                    </div>
+                    <h3>I'm a Worker</h3>
+                    <p>Login to view assigned cleanup tasks</p>
+                    <div class="card-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+
+                <div class="glass-card user-card admin-card" onclick="navigateTo('admin')">
+                    <div class="card-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3>I'm an Admin</h3>
+                    <p>Manage reports and verify completions</p>
+                    <div class="card-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Section -->
+            <div class="stats-section">
+                <div class="glass-card stats-card">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" id="totalReports">0</div>
+                            <div class="stat-label">Reports Filed</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="completedTasks">0</div>
+                            <div class="stat-label">Tasks Completed</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">15</div>
+                            <div class="stat-label">Zones Covered</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">150</div>
+                            <div class="stat-label">Active Workers</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="glass-footer">
+            <p>&copy; 2025 Chennai Clean - Building a sustainable future</p>
+        </footer>
+    </div>
+
+    <!-- Floating Background Elements -->
+    <div class="floating-elements">
+        <div class="floating-element" style="--delay: 0s; --duration: 8s;"></div>
+        <div class="floating-element" style="--delay: 2s; --duration: 12s;"></div>
+        <div class="floating-element" style="--delay: 4s; --duration: 10s;"></div>
+        <div class="floating-element" style="--delay: 6s; --duration: 14s;"></div>
+    </div>
+
+    <!-- Load Supabase first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Load our files after Supabase -->
+    <script src="assets/supabase.js"></script>
+    <script src="assets/app.js"></script>
+
+    <script>
+        // Initialize app after everything loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Supabase to be ready
+            await waitForSupabase();
+
+            // Now initialize the app
+            initializeApp();
+
+            // Load stats with delay to ensure Supabase is ready
+            setTimeout(loadStats, 1000);
+        });
+
+        function navigateTo(userType) {
+            const card = event.currentTarget;
+            card.classList.add('card-clicked');
+
+            setTimeout(() => {
+                switch(userType) {
+                    case 'citizen':
+                        window.location.href = 'citizen/register.html';
+                        break;
+                    case 'worker':
+                        window.location.href = 'worker/login.html';
+                        break;
+                    case 'admin':
+                        window.location.href = 'admin/login.html';
+                        break;
+                }
+            }, 300);
+        }
+
+        async function loadStats() {
+            try {
+                // Make sure Supabase is available
+                if (!window.supabase) {
+                    console.log('Supabase not ready yet, retrying...');
+                    setTimeout(loadStats, 1000);
+                    return;
+                }
+
+                const { data: reports } = await window.supabase
+                    .from('reports')
+                    .select('status');
+
+                if (reports) {
+                    document.getElementById('totalReports').textContent = reports.length;
+                    document.getElementById('completedTasks').textContent =
+                        reports.filter(r => r.status === 'verified').length;
+
+                    // Animate numbers
+                    animateNumbers();
+                } else {
+                    // Show default values if no data
+                    document.getElementById('totalReports').textContent = '0';
+                    document.getElementById('completedTasks').textContent = '0';
+                    animateNumbers();
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Show default values on error
+                document.getElementById('totalReports').textContent = '0';
+                document.getElementById('completedTasks').textContent = '0';
+                animateNumbers();
+            }
+        }
+
+        function animateNumbers() {
+            const numbers = document.querySelectorAll('.stat-number');
+            numbers.forEach(num => {
+                const target = parseInt(num.textContent);
+                let current = 0;
+                const increment = target / 30;
+
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        num.textContent = target;
+                        clearInterval(timer);
+                    } else {
+                        num.textContent = Math.floor(current);
+                    }
+                }, 50);
+            });
+        }
+    </script>
+</body>
+</html>
